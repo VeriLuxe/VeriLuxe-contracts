@@ -1,0 +1,276 @@
+# =============================================
+# VeriLuxe - Comprehensive .gitignore
+# =============================================
+
+# ===== NODE.JS & NPM =====
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Package manager files
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Optional npm cache directory
+.npm/
+
+# ===== RUST & CARGO =====
+# Build outputs
+target/
+Cargo.lock
+
+# Rust backup files
+**/*.rs.bk
+
+# Rust profiling data
+*.profraw
+
+# ===== NEXT.JS FRONTEND =====
+# Next.js build outputs
+/.next/
+/out/
+next-env.d.ts
+
+# Build artifacts
+/build
+/dist
+coverage/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# ===== SOROBAN & STELLAR =====
+# Soroban CLI binaries and archives
+stellar-*
+soroban-*
+*.tar.gz
+*.zip
+
+# WebAssembly files
+*.wasm
+pkg/
+
+# Stellar keys and secrets (NEVER COMMIT THESE)
+*.secret
+*.private
+*.key
+
+# ===== ENVIRONMENT VARIABLES =====
+# Environment files (CRITICAL: Never commit secrets)
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ===== LOGS =====
+# Application logs
+logs/
+*.log
+log/
+
+# Runtime logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ===== TESTING =====
+# Test coverage
+coverage/
+test_snapshots/
+.nyc_output/
+
+# Jest
+jest_*/
+
+# ===== CACHE DIRECTORIES =====
+# Various caches
+.cache/
+.npm/
+.yarn/
+.pnp/
+.pnp.js
+.cargo/
+.soroban/
+
+# ESLint cache
+.eslintcache
+
+# Parcel cache
+.parcel-cache/
+
+# ===== OPERATING SYSTEM =====
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===== IDEs & EDITORS =====
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs (IntelliJ IDEA, WebStorm, etc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+atlassian-ide-plugin.xml
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
+# ===== DEPLOYMENT & HOSTING =====
+# Vercel
+.vercel
+
+# Netlify
+.netlify/
+
+# AWS
+.aws/
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# ===== DOCUMENTATION =====
+# GitBook build output
+_book/
+.gitbook/
+
+# Docusaurus
+.docusaurus/
+build/
+
+# ===== TEMPORARY FILES =====
+# Temporary folders
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Lock files (sometimes)
+package-lock.json
+
+# ===== SECURITY =====
+# Never commit these files
+*.pem
+*.p12
+*.p8
+*.ppk
+*.key
+*.crt
+*.csr
+*.cer
+*.der
+
+# SSH keys
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# ===== PROJECT SPECIFIC =====
+# Local development
+.local/
+
+# Claude AI configuration
+.claude/
+
+# Development databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Archive files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ===== BLOCKCHAIN SPECIFIC =====
+# Contract artifacts
+artifacts/
+deployments/
+
+# Hardhat (if used)
+cache/
+artifacts/
+
+# Generated contract files
+contracts/*.json
+contracts/**/*.json
+
+# ===== OPTIONAL: Development Tools =====
+# If using Docker
+# Dockerfile.dev
+# docker-compose.override.yml
+
+# If using Kubernetes
+# *.kubeconfig
+
+# ===== END OF GITIGNORE =====
+# Last updated: $(date)
+# Generated for VeriLuxe Fashion Authentication Platform

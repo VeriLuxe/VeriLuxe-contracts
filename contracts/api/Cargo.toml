@@ -1,0 +1,46 @@
+[package]
+name = "veriluxe-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Web framework
+axum = "0.7"
+tokio = { version = "1.0", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Soroban SDK - compatible versions
+soroban-sdk = "21.4.0"
+stellar-xdr = { version = "21.2.0", features = ["curr"] }
+stellar-strkey = "0.0.8"
+
+# Environment and configuration
+dotenv = "0.15"
+clap = { version = "4.0", features = ["derive"] }
+
+# Error handling and logging
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# HTTP client for Soroban RPC
+reqwest = { version = "0.12", features = ["json"] }
+
+# Crypto - fixed version
+ed25519-dalek = "1.0.1"
+hex = "0.4"
+
+# UUID for request IDs
+uuid = { version = "1.0", features = ["v4"] }
+
+# Base64 for encoding
+base64 = "0.22"
+
+[dev-dependencies]
+tokio-test = "0.4"
