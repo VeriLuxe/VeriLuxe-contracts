@@ -10,7 +10,8 @@ use crate::{
     models::{
         ApiResponse, Certificate, ErrorResponse, ExistsResponse, InitRequest,
         IssueCertificateRequest, TransactionResponse, TransferCertificateRequest,
-        VerifyCertificateRequest, VerifyResponse,
+        VerifyCertificateRequest, VerifyResponse, HealthResponse, CertificateResponse,
+        TransactionApiResponse, VerifyApiResponse, ExistsApiResponse,
     },
     soroban_client::SorobanClient,
 };
@@ -27,7 +28,7 @@ pub struct AppState {
     path = "/init",
     request_body = InitRequest,
     responses(
-        (status = 200, description = "Contract initialized successfully", body = ApiResponse<TransactionResponse>),
+        (status = 200, description = "Contract initialized successfully", body = TransactionApiResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
     tag = "Contract Management"
@@ -68,7 +69,7 @@ pub async fn init_contract(
     path = "/certificates",
     request_body = IssueCertificateRequest,
     responses(
-        (status = 200, description = "Certificate issued successfully", body = ApiResponse<TransactionResponse>),
+        (status = 200, description = "Certificate issued successfully", body = TransactionApiResponse),
         (status = 400, description = "Bad request", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
@@ -144,7 +145,7 @@ pub async fn issue_certificate(
         ("id" = String, Path, description = "Certificate ID")
     ),
     responses(
-        (status = 200, description = "Certificate details retrieved successfully", body = ApiResponse<Certificate>),
+        (status = 200, description = "Certificate details retrieved successfully", body = CertificateResponse),
         (status = 400, description = "Bad request", body = ErrorResponse),
         (status = 404, description = "Certificate not found", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
@@ -206,7 +207,7 @@ pub async fn get_certificate(
     ),
     request_body = VerifyCertificateRequest,
     responses(
-        (status = 200, description = "Certificate verification completed", body = ApiResponse<VerifyResponse>),
+        (status = 200, description = "Certificate verification completed", body = VerifyApiResponse),
         (status = 400, description = "Bad request", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
@@ -279,7 +280,7 @@ pub async fn verify_certificate(
     ),
     request_body = TransferCertificateRequest,
     responses(
-        (status = 200, description = "Certificate transferred successfully", body = ApiResponse<TransactionResponse>),
+        (status = 200, description = "Certificate transferred successfully", body = TransactionApiResponse),
         (status = 400, description = "Bad request", body = ErrorResponse),
         (status = 404, description = "Certificate not found", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
@@ -377,7 +378,7 @@ pub async fn transfer_certificate(
         ("id" = String, Path, description = "Certificate ID")
     ),
     responses(
-        (status = 200, description = "Certificate revoked successfully", body = ApiResponse<TransactionResponse>),
+        (status = 200, description = "Certificate revoked successfully", body = TransactionApiResponse),
         (status = 400, description = "Bad request", body = ErrorResponse),
         (status = 404, description = "Certificate not found", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
@@ -441,7 +442,7 @@ pub async fn revoke_certificate(
         ("id" = String, Path, description = "Certificate ID")
     ),
     responses(
-        (status = 200, description = "Certificate existence check completed", body = ApiResponse<ExistsResponse>),
+        (status = 200, description = "Certificate existence check completed", body = ExistsApiResponse),
         (status = 400, description = "Bad request", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     ),
@@ -495,7 +496,7 @@ pub async fn check_certificate_exists(
     get,
     path = "/health",
     responses(
-        (status = 200, description = "API is healthy", body = ApiResponse<String>)
+        (status = 200, description = "API is healthy", body = HealthResponse)
     ),
     tag = "Health"
 )]
@@ -520,11 +521,11 @@ pub async fn health_check() -> Json<ApiResponse<String>> {
     ),
     components(
         schemas(
-            ApiResponse<String>,
-            ApiResponse<Certificate>,
-            ApiResponse<TransactionResponse>,
-            ApiResponse<VerifyResponse>,
-            ApiResponse<ExistsResponse>,
+            HealthResponse,
+            CertificateResponse,
+            TransactionApiResponse,
+            VerifyApiResponse,
+            ExistsApiResponse,
             Certificate,
             InitRequest,
             IssueCertificateRequest,

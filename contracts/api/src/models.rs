@@ -44,6 +44,42 @@ pub struct ApiResponse<T> {
     pub message: String,
 }
 
+/// Specific response types for OpenAPI documentation
+#[derive(Debug, Serialize, ToSchema)]
+pub struct HealthResponse {
+    pub success: bool,
+    pub data: Option<String>,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct CertificateResponse {
+    pub success: bool,
+    pub data: Option<Certificate>,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct TransactionApiResponse {
+    pub success: bool,
+    pub data: Option<TransactionResponse>,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct VerifyApiResponse {
+    pub success: bool,
+    pub data: Option<VerifyResponse>,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ExistsApiResponse {
+    pub success: bool,
+    pub data: Option<ExistsResponse>,
+    pub message: String,
+}
+
 /// Response for verification operations
 #[derive(Debug, Serialize, ToSchema)]
 pub struct VerifyResponse {
