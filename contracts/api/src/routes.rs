@@ -3,10 +3,14 @@ use axum::{
     Router,
 };
 use tower_http::cors::CorsLayer;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
-use crate::handlers::{
-    check_certificate_exists, get_certificate, health_check, init_contract, issue_certificate,
-    revoke_certificate, transfer_certificate, verify_certificate, AppState,
+use crate::{
+    handlers::{
+        check_certificate_exists, get_certificate, health_check, init_contract, issue_certificate,
+        revoke_certificate, transfer_certificate, verify_certificate, AppState, ApiDoc,
+    },
 };
 
 /// Create the application router with all endpoints
@@ -25,6 +29,10 @@ pub fn create_router(state: AppState) -> Router {
         .route("/certificates/:id/transfer", post(transfer_certificate))
         .route("/certificates/:id/revoke", post(revoke_certificate))
         .route("/certificates/:id/exists", get(check_certificate_exists))
+        
+        // Swagger UI
+        .merge(SwaggerUi::new("/swagger-ui")
+            .url("/api-docs/openapi.json", ApiDoc::openapi()))
         
         // Add CORS middleware
         .layer(CorsLayer::permissive())

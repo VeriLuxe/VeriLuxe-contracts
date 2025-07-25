@@ -4,6 +4,7 @@ use axum::{
     Json,
 };
 use tracing::{error, info};
+use utoipa::{self, OpenApi};
 
 use crate::{
     models::{
@@ -21,6 +22,16 @@ pub struct AppState {
 }
 
 /// Initialize the contract with admin
+#[utoipa::path(
+    post,
+    path = "/init",
+    request_body = InitRequest,
+    responses(
+        (status = 200, description = "Contract initialized successfully", body = ApiResponse<TransactionResponse>),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
+    ),
+    tag = "Contract Management"
+)]
 pub async fn init_contract(
     State(state): State<AppState>,
     Json(payload): Json<InitRequest>,
@@ -52,6 +63,17 @@ pub async fn init_contract(
 }
 
 /// Issue a new certificate
+#[utoipa::path(
+    post,
+    path = "/certificates",
+    request_body = IssueCertificateRequest,
+    responses(
+        (status = 200, description = "Certificate issued successfully", body = ApiResponse<TransactionResponse>),
+        (status = 400, description = "Bad request", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
+    ),
+    tag = "Certificate Management"
+)]
 pub async fn issue_certificate(
     State(state): State<AppState>,
     Json(payload): Json<IssueCertificateRequest>,
@@ -115,6 +137,20 @@ pub async fn issue_certificate(
 }
 
 /// Get certificate details by ID
+#[utoipa::path(
+    get,
+    path = "/certificates/{id}",
+    params(
+        ("id" = String, Path, description = "Certificate ID")
+    ),
+    responses(
+        (status = 200, description = "Certificate details retrieved successfully", body = ApiResponse<Certificate>),
+        (status = 400, description = "Bad request", body = ErrorResponse),
+        (status = 404, description = "Certificate not found", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
+    ),
+    tag = "Certificate Management"
+)]
 pub async fn get_certificate(
     State(state): State<AppState>,
     Path(cert_id): Path<String>,
@@ -162,6 +198,20 @@ pub async fn get_certificate(
 }
 
 /// Verify a certificate by ID and metadata hash
+#[utoipa::path(
+    post,
+    path = "/certificates/{id}/verify",
+    params(
+        ("id" = String, Path, description = "Certificate ID")
+    ),
+    request_body = VerifyCertificateRequest,
+    responses(
+        (status = 200, description = "Certificate verification completed", body = ApiResponse<VerifyResponse>),
+        (status = 400, description = "Bad request", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
+    ),
+    tag = "Certificate Management"
+)]
 pub async fn verify_certificate(
     State(state): State<AppState>,
     Path(cert_id): Path<String>,
@@ -221,6 +271,21 @@ pub async fn verify_certificate(
 }
 
 /// Transfer certificate ownership
+#[utoipa::path(
+    post,
+    path = "/certificates/{id}/transfer",
+    params(
+        ("id" = String, Path, description = "Certificate ID")
+    ),
+    request_body = TransferCertificateRequest,
+    responses(
+        (status = 200, description = "Certificate transferred successfully", body = ApiResponse<TransactionResponse>),
+        (status = 400, description = "Bad request", body = ErrorResponse),
+        (status = 404, description = "Certificate not found", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
+    ),
+    tag = "Certificate Management"
+)]
 pub async fn transfer_certificate(
     State(state): State<AppState>,
     Path(cert_id): Path<String>,
@@ -305,6 +370,20 @@ pub async fn transfer_certificate(
 }
 
 /// Revoke a certificate
+#[utoipa::path(
+    post,
+    path = "/certificates/{id}/revoke",
+    params(
+        ("id" = String, Path, description = "Certificate ID")
+    ),
+    responses(
+        (status = 200, description = "Certificate revoked successfully", body = ApiResponse<TransactionResponse>),
+        (status = 400, description = "Bad request", body = ErrorResponse),
+        (status = 404, description = "Certificate not found", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
+    ),
+    tag = "Certificate Management"
+)]
 pub async fn revoke_certificate(
     State(state): State<AppState>,
     Path(cert_id): Path<String>,
@@ -355,6 +434,19 @@ pub async fn revoke_certificate(
 }
 
 /// Check if certificate exists
+#[utoipa::path(
+    get,
+    path = "/certificates/{id}/exists",
+    params(
+        ("id" = String, Path, description = "Certificate ID")
+    ),
+    responses(
+        (status = 200, description = "Certificate existence check completed", body = ApiResponse<ExistsResponse>),
+        (status = 400, description = "Bad request", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
+    ),
+    tag = "Certificate Management"
+)]
 pub async fn check_certificate_exists(
     State(state): State<AppState>,
     Path(cert_id): Path<String>,
@@ -399,9 +491,71 @@ pub async fn check_certificate_exists(
 }
 
 /// Health check endpoint
+#[utoipa::path(
+    get,
+    path = "/health",
+    responses(
+        (status = 200, description = "API is healthy", body = ApiResponse<String>)
+    ),
+    tag = "Health"
+)]
 pub async fn health_check() -> Json<ApiResponse<String>> {
     Json(ApiResponse::success(
         "healthy".to_string(),
         "API is running".to_string(),
     ))
 }
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        health_check,
+        init_contract,
+        issue_certificate,
+        get_certificate,
+        verify_certificate,
+        transfer_certificate,
+        revoke_certificate,
+        check_certificate_exists,
+    ),
+    components(
+        schemas(
+            ApiResponse<String>,
+            ApiResponse<Certificate>,
+            ApiResponse<TransactionResponse>,
+            ApiResponse<VerifyResponse>,
+            ApiResponse<ExistsResponse>,
+            Certificate,
+            InitRequest,
+            IssueCertificateRequest,
+            VerifyCertificateRequest,
+            TransferCertificateRequest,
+            TransactionResponse,
+            VerifyResponse,
+            ExistsResponse,
+            ErrorResponse,
+        )
+    ),
+    tags(
+        (name = "Health", description = "Health check endpoints"),
+        (name = "Contract Management", description = "Smart contract initialization"),
+        (name = "Certificate Management", description = "Certificate CRUD operations"),
+    ),
+    info(
+        title = "VeriLuxe API",
+        version = "0.1.0",
+        description = "REST API for issuing, verifying, revoking, and transferring authenticity certificates for luxury fashion items using Stellar blockchain",
+        contact(
+            name = "VeriLuxe API",
+            url = "https://github.com/veriluxe/api",
+        ),
+        license(
+            name = "MIT",
+            url = "https://opensource.org/licenses/MIT",
+        ),
+    ),
+    servers(
+        (url = "http://127.0.0.1:3000", description = "Local development server"),
+    ),
+)]
+pub struct ApiDoc;
