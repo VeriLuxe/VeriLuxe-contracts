@@ -1,0 +1,164 @@
+name: Smart Contracts CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/contracts-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'contracts/**'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    name: Lint Smart Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/target
+          key: ${{ runner.os }}-cargo-contracts-${{ hashFiles('contracts/**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-contracts-
+
+      - name: Install Soroban CLI
+        run: |
+          cargo install --locked soroban-cli --features opt
+          soroban --version
+
+      - name: Format check
+        run: |
+          cd contracts
+          cargo fmt --all -- --check
+
+      - name: Clippy check
+        run: |
+          cd contracts
+          cargo clippy --all-targets --all-features -- -D warnings
+
+  test:
+    name: Test Smart Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/target
+          key: ${{ runner.os }}-cargo-contracts-${{ hashFiles('contracts/**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-contracts-
+
+      - name: Install Soroban CLI
+        run: |
+          cargo install --locked soroban-cli --features opt
+
+      - name: Run contract tests
+        run: |
+          cd contracts/contracts
+          cargo test --verbose
+
+      - name: Build contract
+        run: |
+          cd contracts/contracts
+          cargo build --target wasm32-unknown-unknown --release
+
+      - name: Optimize contract
+        run: |
+          cd contracts/contracts
+          soroban contract optimize --wasm target/wasm32-unknown-unknown/release/veriluxe_contracts.wasm
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/target
+          key: ${{ runner.os }}-cargo-contracts-${{ hashFiles('contracts/**/Cargo.lock') }}
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run security audit
+        run: |
+          cd contracts
+          cargo audit
+
+      - name: Check for outdated dependencies
+        run: |
+          cd contracts
+          cargo outdated --exit-code 1 || echo "Some dependencies are outdated"
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/target
+          key: ${{ runner.os }}-cargo-contracts-${{ hashFiles('contracts/**/Cargo.lock') }}
+
+      - name: Install Soroban CLI
+        run: cargo install --locked soroban-cli --features opt
+
+      - name: Install tarpaulin
+        run: cargo install cargo-tarpaulin
+
+      - name: Generate code coverage
+        run: |
+          cd contracts/contracts
+          cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./contracts/contracts/cobertura.xml
+          flags: smartcontracts
+          name: smartcontracts-coverage
+          fail_ci_if_error: false

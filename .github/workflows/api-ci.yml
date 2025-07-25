@@ -1,0 +1,229 @@
+name: API CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'contracts/api/**'
+      - '.github/workflows/api-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'contracts/api/**'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  lint:
+    name: Lint API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/api/target
+          key: ${{ runner.os }}-cargo-api-${{ hashFiles('contracts/api/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-api-
+
+      - name: Format check
+        run: |
+          cd contracts/api
+          cargo fmt --all -- --check
+
+      - name: Clippy check
+        run: |
+          cd contracts/api
+          cargo clippy --all-targets --all-features -- -D warnings
+
+  test:
+    name: Test API
+    runs-on: ubuntu-latest
+    services:
+      stellar:
+        image: stellar/quickstart:soroban-dev
+        ports:
+          - 8000:8000
+        options: >-
+          --health-cmd "curl -f http://localhost:8000/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/api/target
+          key: ${{ runner.os }}-cargo-api-${{ hashFiles('contracts/api/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-api-
+
+      - name: Create test environment file
+        run: |
+          cd contracts/api
+          cat > .env.test << EOF
+          SOROBAN_RPC_URL=http://localhost:8000/soroban/rpc
+          SOROBAN_NETWORK_PASSPHRASE=Standalone Network ; February 2017
+          FASHION_AUTH_CONTRACT_ID=test_contract_id
+          ADMIN_SECRET_KEY=SAIPPNG3AGHSK2CLHIYQMVBPHISOOPT64MMW2PQGER47SDCN6C6XFWQM
+          API_HOST=127.0.0.1
+          API_PORT=3001
+          EOF
+
+      - name: Run unit tests
+        run: |
+          cd contracts/api
+          cargo test --verbose
+
+      - name: Run integration tests
+        run: |
+          cd contracts/api
+          cargo test --test integration_tests --verbose
+        env:
+          TEST_ENV: true
+
+  build:
+    name: Build API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/api/target
+          key: ${{ runner.os }}-cargo-api-${{ hashFiles('contracts/api/Cargo.lock') }}
+
+      - name: Build API
+        run: |
+          cd contracts/api
+          cargo build --release --verbose
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-binary
+          path: contracts/api/target/release/veriluxe-api
+          retention-days: 7
+
+  docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [lint, test, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: veriluxe/api
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./contracts/api
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  openapi:
+    name: Validate OpenAPI Spec
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: api-binary
+          path: ./api-binary
+
+      - name: Make binary executable
+        run: chmod +x ./api-binary/veriluxe-api
+
+      - name: Start API server
+        run: |
+          cd contracts/api
+          cat > .env << EOF
+          SOROBAN_RPC_URL=http://localhost:8000/soroban/rpc
+          SOROBAN_NETWORK_PASSPHRASE=Standalone Network ; February 2017
+          FASHION_AUTH_CONTRACT_ID=test_contract_id
+          ADMIN_SECRET_KEY=SAIPPNG3AGHSK2CLHIYQMVBPHISOOPT64MMW2PQGER47SDCN6C6XFWQM
+          API_HOST=127.0.0.1
+          API_PORT=3000
+          EOF
+          ../../api-binary/veriluxe-api &
+          sleep 10
+
+      - name: Validate OpenAPI spec
+        run: |
+          curl -f http://localhost:3000/api-docs/openapi.json -o openapi.json
+          
+      - name: Install swagger-codegen
+        run: |
+          wget https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.46/swagger-codegen-cli-3.0.46.jar -O swagger-codegen-cli.jar
+
+      - name: Validate spec with swagger-codegen
+        run: |
+          java -jar swagger-codegen-cli.jar validate -i openapi.json
+
+      - name: Generate API documentation
+        run: |
+          java -jar swagger-codegen-cli.jar generate -i openapi.json -l html2 -o api-docs
+
+      - name: Upload API documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-documentation
+          path: api-docs/
+          retention-days: 30

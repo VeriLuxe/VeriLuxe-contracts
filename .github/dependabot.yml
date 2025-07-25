@@ -1,0 +1,46 @@
+version: 2
+updates:
+  # Rust dependencies for smart contracts
+  - package-ecosystem: "cargo"
+    directory: "/contracts/contracts"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "veriluxe-team"
+    assignees:
+      - "veriluxe-team"
+    commit-message:
+      prefix: "deps(contracts)"
+      include: "scope"
+    open-pull-requests-limit: 5
+    target-branch: "develop"
+
+  # Rust dependencies for API
+  - package-ecosystem: "cargo"
+    directory: "/contracts/api"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "veriluxe-team"
+    assignees:
+      - "veriluxe-team"
+    commit-message:
+      prefix: "deps(api)"
+      include: "scope"
+    open-pull-requests-limit: 5
+    target-branch: "develop"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "veriluxe-team"
+    assignees:
+      - "veriluxe-team"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    open-pull-requests-limit: 3
+    target-branch: "develop"
